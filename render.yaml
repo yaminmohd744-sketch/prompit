@@ -18,14 +18,9 @@ services:
       - key: PORT
         value: "3001"
       - key: FRONTEND_URL
-        fromService:
-          type: web
-          name: prompit-api
-          property: host
+        value: https://prompit-web.vercel.app
       - key: DATABASE_URL
-        sync: false
-      - key: DIRECT_URL
-        sync: false
+        value: postgresql://postgres:Prompit2024Secure1@db.zxhskwnhmwzkoaklhsxv.supabase.co:5432/postgres
       - key: REDIS_URL
         sync: false
       - key: JWT_SECRET
