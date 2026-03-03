@@ -3,9 +3,11 @@ import Stripe from "stripe";
 import { requireAuth } from "../middleware/auth.js";
 import { db } from "@prompit/db";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
-  apiVersion: "2025-02-24.acacia",
-});
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
+  return new Stripe(key, { apiVersion: "2025-02-24.acacia" });
+}
 
 const PLANS = {
   PRO: { priceId: process.env.STRIPE_PRO_PRICE_ID ?? "", credits: 2000 },
@@ -13,6 +15,19 @@ const PLANS = {
 };
 
 export async function billingRoutes(app: FastifyInstance) {
+  // Preserve raw body for Stripe webhook signature verification
+  app.addContentTypeParser("application/json", { parseAs: "buffer" }, function (_req, body, done) {
+    try {
+      const str = (body as Buffer).toString("utf8");
+      // Store raw body on request for Stripe
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (_req as any).rawBody = str;
+      done(null, JSON.parse(str));
+    } catch (err) {
+      done(err as Error, undefined);
+    }
+  });
+
   app.get("/plans", async () => ({
     plans: [
       { id: "FREE", name: "Free", price: 0, credits: 100 },
@@ -31,7 +46,7 @@ export async function billingRoutes(app: FastifyInstance) {
     const user = await db.user.findUnique({ where: { id: payload.userId } });
     if (!user) return reply.status(404).send({ error: "User not found" });
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
       customer_email: user.email,
@@ -46,11 +61,13 @@ export async function billingRoutes(app: FastifyInstance) {
 
   app.post("/webhook", async (req, reply) => {
     const sig = req.headers["stripe-signature"] as string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rawBody = (req as any).rawBody as string ?? JSON.stringify(req.body);
     let event: Stripe.Event;
 
     try {
-      event = stripe.webhooks.constructEvent(
-        req.rawBody as string,
+      event = getStripe().webhooks.constructEvent(
+        rawBody,
         sig,
         process.env.STRIPE_WEBHOOK_SECRET ?? ""
       );

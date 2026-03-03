@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import type { Modality } from "@prompit/types";
 import type { ModelProvider, GenerateRequest, GenerateResult } from "../types.js";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -11,7 +12,7 @@ const MODEL_COSTS: Record<string, number> = {
 
 export class AnthropicProvider implements ModelProvider {
   id: string;
-  modalities = ["text", "code"] as const;
+  modalities: Modality[] = ["text", "code"];
   private modelName: string;
 
   constructor(modelId: string, modelName: string) {

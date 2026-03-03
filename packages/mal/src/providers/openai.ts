@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import type { Modality } from "@prompit/types";
 import type { ModelProvider, GenerateRequest, GenerateResult } from "../types.js";
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -12,7 +13,7 @@ const MODEL_COSTS: Record<string, number> = {
 
 export class OpenAITextProvider implements ModelProvider {
   id: string;
-  modalities = ["text", "code"] as const;
+  modalities: Modality[] = ["text", "code"];
   private modelName: string;
 
   constructor(modelId: string, modelName: string) {
@@ -49,7 +50,7 @@ export class OpenAITextProvider implements ModelProvider {
 
 export class DallEProvider implements ModelProvider {
   id = "openai/dall-e-3";
-  modalities = ["image"] as const;
+  modalities: Modality[] = ["image"];
 
   estimateCost(_req: GenerateRequest): number {
     return 20;
@@ -66,7 +67,7 @@ export class DallEProvider implements ModelProvider {
       response_format: "url",
     });
 
-    const outputUrl = response.data[0]?.url ?? "";
+    const outputUrl = response.data?.[0]?.url ?? "";
 
     return {
       jobId: req.jobId,
@@ -79,7 +80,7 @@ export class DallEProvider implements ModelProvider {
 
 export class OpenAITTSProvider implements ModelProvider {
   id: string;
-  modalities = ["audio"] as const;
+  modalities: Modality[] = ["audio"];
   private modelName: string;
 
   constructor(modelId: string, modelName: "tts-1" | "tts-1-hd") {

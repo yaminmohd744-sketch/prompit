@@ -24,11 +24,22 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Type check
+      - name: Generate Prisma client
+        run: pnpm --filter @prompit/db exec prisma generate
+        env:
+          DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
+
+      - name: Type check web
         run: pnpm --filter @prompit/web exec tsc --noEmit
+
+      - name: Type check API
+        run: pnpm --filter @prompit/api exec tsc --noEmit
 
       - name: Build web
         run: pnpm --filter @prompit/web build
+
+      - name: Build API
+        run: pnpm --filter @prompit/api build
 
   deploy-web:
     needs: build
@@ -64,10 +75,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy API to Railway
-        if: env.RAILWAY_TOKEN != ''
+      - name: Deploy API to Render
+        if: ${{ secrets.RENDER_API_KEY != '' }}
         run: |
-          npm install -g @railway/cli
-          railway up --service api-gateway --detach
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          curl -X POST "https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploys" \
+            -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"clearCache": false}'

@@ -3,7 +3,7 @@ import { AnthropicProvider } from "./providers/anthropic.js";
 import { StubProvider } from "./providers/stub.js";
 import type { ModelProvider } from "./types.js";
 
-export const registry = new Map<string, ModelProvider>([
+const entries: [string, ModelProvider][] = [
   // ── TEXT ──────────────────────────────────────────────────────
   ["openai/gpt-4o",           new OpenAITextProvider("openai/gpt-4o", "gpt-4o")],
   ["openai/gpt-4o-mini",      new OpenAITextProvider("openai/gpt-4o-mini", "gpt-4o-mini")],
@@ -39,4 +39,6 @@ export const registry = new Map<string, ModelProvider>([
   // ── 3D ───────────────────────────────────────────────────────
   ["meshy/v4",                new StubProvider("meshy/v4",                 ["3d"], 50)],
   ["luma/3d",                 new StubProvider("luma/3d",                  ["3d"], 60)],
-]);
+];
+
+export const registry = new Map<string, ModelProvider>(entries);

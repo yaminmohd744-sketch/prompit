@@ -4,6 +4,7 @@ import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import jwt from "@fastify/jwt";
+import { Redis } from "ioredis";
 import { authRoutes } from "./routes/auth.js";
 import { generateRoutes } from "./routes/generate.js";
 import { jobRoutes } from "./routes/jobs.js";
@@ -14,6 +15,10 @@ import { adminRoutes } from "./routes/admin.js";
 
 const app = Fastify({ logger: true });
 
+const redisClient = process.env.REDIS_URL
+  ? new Redis(process.env.REDIS_URL, { maxRetriesPerRequest: null })
+  : undefined;
+
 // Plugins
 await app.register(cors, {
   origin: process.env.FRONTEND_URL ?? "http://localhost:3000",
@@ -23,7 +28,7 @@ await app.register(helmet, { contentSecurityPolicy: false });
 await app.register(rateLimit, {
   max: 100,
   timeWindow: "1 minute",
-  redis: undefined, // wire up ioredis in production
+  redis: redisClient,
 });
 await app.register(jwt, {
   secret: process.env.JWT_SECRET ?? "dev-secret-change-in-production",

@@ -12,17 +12,16 @@ const generateSchema = z.object({
   parameters: z.record(z.unknown()).optional().default({}),
 });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function makeGenerateRoute(mode: Modality) {
-  return async function (req: FastifyInstance["_Rec"], reply: FastifyInstance["_Rec"]) {
-    const payload = (req as { user: { userId: string } }).user;
-    const body = generateSchema.parse((req as { body: unknown }).body);
+  return async function (req: any, reply: any) {
+    const payload = req.user as { userId: string };
+    const body = generateSchema.parse(req.body);
     const jobId = uuidv4();
 
     const provider = mal.getProvider(body.model);
     if (!provider) {
-      return (reply as { status: (n: number) => { send: (d: unknown) => unknown } })
-        .status(400)
-        .send({ error: `Unknown model: ${body.model}` });
+      return reply.status(400).send({ error: `Unknown model: ${body.model}` });
     }
 
     const estimatedCost = provider.estimateCost({ ...body, mode, jobId, userId: payload.userId });
@@ -33,9 +32,7 @@ function makeGenerateRoute(mode: Modality) {
     });
 
     if (!user || user.credits < estimatedCost) {
-      return (reply as { status: (n: number) => { send: (d: unknown) => unknown } })
-        .status(402)
-        .send({ error: "Insufficient credits", required: estimatedCost });
+      return reply.status(402).send({ error: "Insufficient credits", required: estimatedCost });
     }
 
     await db.generation.create({
@@ -45,7 +42,8 @@ function makeGenerateRoute(mode: Modality) {
         prompt: body.prompt,
         mode,
         model: body.model,
-        parameters: body.parameters,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        parameters: body.parameters as any,
         status: "pending",
         creditsUsed: estimatedCost,
       },
@@ -92,6 +90,7 @@ export async function generateRoutes(app: FastifyInstance) {
   const modes: Modality[] = ["text", "image", "video", "audio", "code", "3d"];
 
   for (const mode of modes) {
-    app.post(`/${mode}`, { preHandler: requireAuth }, makeGenerateRoute(mode) as Parameters<typeof app.post>[2]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    app.post(`/${mode}`, { preHandler: requireAuth }, makeGenerateRoute(mode) as any);
   }
 }
