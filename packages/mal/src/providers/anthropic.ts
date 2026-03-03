@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { Modality } from "@prompit/types";
 import type { ModelProvider, GenerateRequest, GenerateResult } from "../types.js";
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY || "not-configured" });
 
 const MODEL_COSTS: Record<string, number> = {
   "claude-opus-4-6": 20,

@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import type { Modality } from "@prompit/types";
 import type { ModelProvider, GenerateRequest, GenerateResult } from "../types.js";
 
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY || "not-configured" });
 
 // Cost in credits per 1K tokens (input+output average)
 const MODEL_COSTS: Record<string, number> = {
