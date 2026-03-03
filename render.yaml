@@ -8,7 +8,9 @@ services:
     buildCommand: >
       npm install -g pnpm@10 &&
       pnpm install --frozen-lockfile &&
-      pnpm --filter @prompit/db exec prisma generate &&
+      pnpm --filter @prompit/types build &&
+      pnpm --filter @prompit/db build &&
+      pnpm --filter @prompit/mal build &&
       pnpm --filter @prompit/api build
     startCommand: node apps/api/dist/index.js
     healthCheckPath: /health
