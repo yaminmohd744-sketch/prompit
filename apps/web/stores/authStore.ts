@@ -21,7 +21,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
 
       login: async (email, password) => {
-        const { user, accessToken } = await apiClient.post("/auth/login", {
+        const { user, accessToken } = await apiClient.post<{ user: User; accessToken: string }>("/auth/login", {
           email,
           password,
         });
@@ -29,7 +29,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       register: async (name, email, password) => {
-        const { user, accessToken } = await apiClient.post("/auth/register", {
+        const { user, accessToken } = await apiClient.post<{ user: User; accessToken: string }>("/auth/register", {
           name,
           email,
           password,
@@ -39,14 +39,14 @@ export const useAuthStore = create<AuthState>()(
 
       logout: async () => {
         try {
-          await apiClient.post("/auth/logout", {});
+          await apiClient.post<{ ok: boolean }>("/auth/logout", {});
         } finally {
           set({ user: null, accessToken: null, isAuthenticated: false });
         }
       },
 
       refreshCredits: async () => {
-        const { credits } = await apiClient.get("/users/me/credits");
+        const { credits } = await apiClient.get<{ credits: number }>("/users/me/credits");
         const user = get().user;
         if (user) set({ user: { ...user, credits } });
       },
